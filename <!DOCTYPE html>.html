@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Neutral Grounds - Coffee Reviews</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #fdfaf6;
+      --text: #3b2d23;
+      --accent: #6B4635;
+      --border: #ddd;
+      --card-bg: #fff;
+    }
+    [data-theme="dark"] {
+      --bg: #1e1e1e;
+      --text: #f0f0f0;
+      --accent: #c18d6a;
+      --border: #444;
+      --card-bg: #2c2c2c;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: 'Roboto', sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      transition: background-color 0.3s, color 0.3s;
+    }
+    a {
+      color: var(--accent);
+    }
+    header {
+      background: var(--card-bg);
+      padding: 15px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .nav-links {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+    }
+    .nav-links a {
+      text-decoration: none;
+      font-weight: bold;
+    }
+    .menu-toggle {
+      display: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+    @media (max-width: 768px) {
+      .nav-links {
+        position: absolute;
+        top: 60px;
+        left: 0;
+        right: 0;
+        background: var(--card-bg);
+        flex-direction: column;
+        display: none;
+        padding: 10px;
+      }
+      .nav-links.active {
+        display: flex;
+      }
+      .menu-toggle {
+        display: block;
+      }
+    }
+
+    /* Ticker Styles */
+    #reviewTicker {
+      background: var(--accent);
+      color: white;
+      padding: 15px 20px;
+      text-align: center;
+      font-size: 1.1rem;
+      font-weight: bold;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .ticker-item {
+      position: absolute;
+      width: 100%;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+    }
+
+    .ticker-item.active {
+      opacity: 1;
+    }
+
+    .hero {
+      background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)),
+                  url('https://images.unsplash.com/photo-1509042239860-f550ce710b93') center/cover no-repeat;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      color: white;
+      padding: 0 20px;
+    }
+    .hero h1 {
+      font-size: 3rem;
+      margin-bottom: 10px;
+    }
+    .scroll-down {
+      margin-top: 30px;
+      cursor: pointer;
+      font-size: 1.2rem;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+    }
+    .section {
+      padding: 40px 20px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 30px;
+      color: var(--accent);
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    input[type="text"],
+    select,
+    input[type="file"] {
+      width: 100%;
+      padding: 10px;
+      border-radius: 5px;
+      border: 1px solid var(--border);
+      font-size: 1rem;
+    }
+    .stars {
+      display: flex;
+      gap: 5px;
+      margin-bottom: 15px;
+    }
+    .stars input[type="radio"] {
+      display: none;
+    }
+    .stars label {
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: #ccc;
+    }
+    .stars input[type="radio"]:checked ~ label,
+    .stars label:hover,
+    .stars label:hover ~ label {
+      color: gold;
+    }
+    button {
+      background-color: var(--accent);
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      font-size: 1rem;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    button:hover {
+      background-color: #54362a;
+    }
+    .review-list {
+      margin-top: 30px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .review {
+      background: var(--card-bg);
+      border-radius: 10px;
+      padding: 15px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+    .review.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .review h4 {
+      margin-bottom: 5px;
+      color: var(--text);
+    }
+    .review .rating {
+      margin-bottom: 10px;
+      font-size: 1.2rem;
+    }
+    .review img {
+      max-width: 100%;
+      max-height: 150px;
+      object-fit: cover;
+      border-radius: 8px;
+      margin-top: 10px;
+    }
+    .review-actions {
+      margin-top: 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .like-button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 1.2rem;
+      color: var(--accent);
+    }
+    .testimonial {
+      background: var(--card-bg);
+      border-left: 5px solid var(--accent);
+      padding: 20px;
+      margin-top: 40px;
+      border-radius: 10px;
+    }
+    .testimonial img {
+      width: 80px;
+      height: 80px;
+      object-fit: cover;
+      border-radius: 50%;
+      float: left;
+      margin-right: 20px;
+    }
+    .social-share {
+      margin-top: 30px;
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .social-share a {
+      display: inline-block;
+      padding: 10px 20px;
+      background: var(--accent);
+      color: white;
+      border-radius: 5px;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    .social-share a:hover {
+      background: #54362a;
+    }
+    .theme-toggle {
+      padding: 8px 16px;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-left: 10px;
+    }
+    .search-filter {
+      margin-bottom: 20px;
+    }
+    .search-filter input {
+      margin-bottom: 10px;
+    }
+    @media (min-width: 600px) {
+      .review {
+        flex-direction: row;
+        gap: 20px;
+        align-items: center;
+      }
+      .review .content {
+        flex: 1;
+      }
+      .review img {
+        width: 120px;
+        height: 120px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="nav-links" id="navLinks">
+      <a href="#home">Home</a>
+      <a href="#reviews">Reviews</a>
+      <a href="#map">Map</a>
+    </div>
+    <button class="menu-toggle" id="menuToggle">&#9776;</button>
+    <button class="theme-toggle" id="themeToggle">Toggle Theme</button>
+  </header>
+
+  <!-- Review Ticker -->
+  <div id="reviewTicker">
+    <div id="tickerContent" class="ticker-item active"></div>
+  </div>
+
+  <!-- Hero Section -->
+  <section class="hero" id="home">
+    <h1>Neutral Grounds</h1>
+    <p>Welcome to your local coffee haven in Seward, Nebraska</p>
+    <div class="scroll-down" onclick="scrollToSection()">Scroll down to leave a review</div>
+  </section>
+
+  <!-- Review Section -->
+  <section class="section" id="reviews">
+    <h2>Leave a Review</h2>
+    <form id="reviewForm">
+      <div class="form-group">
+        <label for="name">Your Name</label>
+        <input type="text" id="name" required />
+      </div>
+      <div class="form-group">
+        <label for="category">Category</label>
+        <select id="category" required>
+          <option value="">Select</option>
+          <option value="Coffee">Coffee</option>
+          <option value="Tea">Tea</option>
+          <option value="Muffin">Muffin</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="item">Specific Item</label>
+        <input type="text" id="item" required />
+      </div>
+      <div class="form-group">
+        <label for="rating">Rating</label>
+        <div class="stars" id="rating">
+          <input type="radio" id="star5" name="rating" value="5" />
+          <label for="star5">&#9733;</label>
+          <input type="radio" id="star4" name="rating" value="4" />
+          <label for="star4">&#9733;</label>
+          <input type="radio" id="star3" name="rating" value="3" />
+          <label for="star3">&#9733;</label>
+          <input type="radio" id="star2" name="rating" value="2" />
+          <label for="star2">&#9733;</label>
+          <input type="radio" id="star1" name="rating" value="1" />
+          <label for="star1">&#9733;</label>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="photo">Upload a Photo</label>
+        <input type="file" id="photo" accept="image/*" />
+      </div>
+      <button type="submit">Submit Review</button>
+      <button type="button" onclick="downloadCSV()">Download Reviews</button>
+    </form>
+    <div class="review-list" id="reviewList"></div>
+    <div class="social-share">
+      <a href="https://www.facebook.com/sharer/sharer.php?u=https://your-site.com" target="_blank">Share on Facebook</a>
+      <a href="https://www.instagram.com" target="_blank">Share on Instagram</a>
+    </div>
+  </section>
+
+  <!-- Google Map -->
+  <section class="section" id="map">
+    <h2>Find Us</h2>
+    <iframe src="https://www.google.com/maps?q=Seward,NE&output=embed" width="100%" height="400" frameborder="0" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+  </section>
+
+  <script>
+    // Scroll to Section
+    function scrollToSection() {
+      document.getElementById('reviews').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // Mobile Menu Toggle
+    const menuToggle = document.getElementById('menuToggle');
+    const navLinks = document.getElementById('navLinks');
+    menuToggle.addEventListener('click', () => {
+      navLinks.classList.toggle('active');
+    });
+
+    // Theme Toggle
+    const themeToggle = document.getElementById('themeToggle');
+    themeToggle.addEventListener('click', () => {
+      const currentTheme = document.documentElement.getAttribute('data-theme');
+      if (currentTheme === 'dark') {
+        document.documentElement.removeAttribute('data-theme');
+      } else {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+    });
+
+    // Scroll Animations
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, { threshold: 0.1 });
+
+    // Review Form Handling
+    const form = document.getElementById('reviewForm');
+    const reviewList = document.getElementById('reviewList');
+    let reviews = [];
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+
+      const name = document.getElementById('name').value.trim();
+      const category = document.getElementById('category').value;
+      const item = document.getElementById('item').value.trim();
+      const rating = document.querySelector('input[name="rating"]:checked');
+      const photoInput = document.getElementById('photo');
+      const file = photoInput.files[0];
+
+      if (!name || !category || !item || !rating) {
+        alert('Please fill out all required fields.');
+        return;
+      }
+
+      const reader = new FileReader();
+      const reviewData = {
+        name,
+        category,
+        item,
+        rating: rating.value,
+        timestamp: new Date(),
+        likes: 0
+      };
+
+      if (file) {
+        reader.onload = function (e) {
+          reviewData.image = e.target.result;
+          reviews.push(reviewData);
+          renderReviews();
+        };
+        reader.readAsDataURL(file);
+      } else {
+        reviews.push(reviewData);
+        renderReviews();
+      }
+
+      form.reset();
+    });
+
+    function generateStars(rating) {
+      let stars = '';
+      for (let i = 1; i <= 5; i++) {
+        stars += i <= rating ? '★' : '☆';
+      }
+      return stars;
+    }
+
+    function formatDate(date) {
+      return date.toLocaleString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+
+    function renderReviews() {
+      reviewList.innerHTML = '';
+      reviews.forEach((review, index) => {
+        const reviewEl = document.createElement('div');
+        reviewEl.className = 'review';
+        observer.observe(reviewEl);
+        reviewEl.innerHTML = `
+          <h4>${review.name}</h4>
+          <p><strong>Category:</strong> ${review.category}</p>
+          <p><strong>Item:</strong> ${review.item}</p>
+          <div class="rating">${generateStars(review.rating)}</div>
+          <small>${formatDate(review.timestamp)}</small>
+          ${review.image ? `<img src="${review.image}" alt="Review Photo" />` : ''}
+          <div class="review-actions">
+            <button class="like-button" onclick="likeReview(${index})">👍 Likes: ${review.likes}</button>
+          </div>
+        `;
+        reviewList.appendChild(reviewEl);
+      });
+    }
+
+    window.likeReview = function(index) {
+      reviews[index].likes++;
+      renderReviews();
+    };
+
+    function downloadCSV() {
+      const csvRows = [];
+      const headers = ['Name', 'Category', 'Item', 'Rating', 'Timestamp', 'Image'];
+      csvRows.push(headers.join(','));
+
+      reviews.forEach(review => {
+        const row = [
+          `"${review.name.replace(/"/g, '""')}"`,
+          `"${review.category}"`,
+          `"${review.item.replace(/"/g, '""')}"`,
+          `"${review.rating}"`,
+          `"${review.timestamp.toISOString()}"`,
+          `"${review.image || ''}"`,
+        ];
+        csvRows.push(row.join(','));
+      });
+
+      const csvString = csvRows.join('\n');
+      const blob = new Blob([csvString], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'neutralgrounds_reviews.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // === Review Ticker Logic ===
+    const tickerContent = document.getElementById('tickerContent');
+    let tickerIndex = 0;
+    let tickerInterval;
+
+    function updateTicker() {
+      const latestReviews = reviews.slice(-10); // Show latest 10 reviews
+      if (latestReviews.length === 0) return;
+
+      const review = latestReviews[tickerIndex % latestReviews.length];
+      const stars = generateStars(review.rating);
+      const text = `${review.name} loved the ${review.item} ${review.category} ${stars}`;
+
+      tickerContent.classList.remove('active');
+
+      setTimeout(() => {
+        tickerContent.textContent = text;
+        tickerContent.classList.add('active');
+        tickerIndex++;
+      }, 500);
+    }
+
+    // Start ticker
+    tickerInterval = setInterval(updateTicker, 4000);
+
+    // Pause on hover
+    const ticker = document.getElementById('reviewTicker');
+    ticker.addEventListener('mouseenter', () => clearInterval(tickerInterval));
+    ticker.addEventListener('mouseleave', () => {
+      tickerInterval = setInterval(updateTicker, 4000);
+    });
+    // === End Ticker Logic ===
+
+  </script>
+</body>
+</html>
